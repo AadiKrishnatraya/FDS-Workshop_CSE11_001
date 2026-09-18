@@ -1,4 +1,5 @@
 import express from "express";
+import cors from "cors"; 
 
 let userData = [
     {
@@ -10,20 +11,19 @@ let userData = [
 ];
 
 const app = express();
-app.use(express.json());
+
+app.use(cors("http:/localhost:3000")); 
+app.use(express.json()); 
 
 const port = 3000;
-
 
 app.get("/msg", (req, res) => {
     res.json({ message: "Welcome to Express" });
 });
 
-
 app.get("/user", (req, res) => {
     res.json(userData);
 });
-
 
 app.get("/user/:id", (req, res) => {
     const id = Number(req.params.id);
@@ -44,13 +44,11 @@ app.get("/user/:id", (req, res) => {
         });
     }
 
-    
     return res.status(200).json({
         success: true,
         user
     });
 });
-
 
 app.post("/user", (req, res) => {
     const { name, email, age } = req.body;
@@ -76,7 +74,6 @@ app.post("/user", (req, res) => {
     });
 });
 
-
 app.put("/user/:id", (req, res) => {
     const id = Number(req.params.id);
     const { name, email, age } = req.body;
@@ -100,7 +97,6 @@ app.put("/user/:id", (req, res) => {
         user
     });
 });
-
 
 app.delete("/user/:id", (req, res) => {
     const id = Number(req.params.id);
