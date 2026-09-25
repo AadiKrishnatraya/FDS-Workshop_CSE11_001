@@ -1,142 +1,260 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "./App.css";
 
 export default function App() {
-    const [method, setMethod] = useState("GET");
-    const [url, setUrl] = useState("http://localhost:3000/user");
-    const [body, setBody] = useState('{\n  "name": "aadi",\n  "email": "aadi@example.com"\n}');
-    
-    // Response State
-    const [response, setResponse] = useState(null);
+    const [usersList, setUsersList] = useState([]);
+    const [editingUserId, setEditingUserId] = useState(null);
+    const [editFormData, setEditFormData] = useState({ name: "", email: "" });
+
+    // Quick Sign Up Form State
+    const [signupData, setSignupData] = useState({
+        name: "",
+        email: "",
+        password: "",
+        age: ""
+    });
+
     const [loading, setLoading] = useState(false);
+    const [statusMessage, setStatusMessage] = useState(null);
 
-    
-    const handleSendRequest = async () => {
+    // Fetch registered users list from Express server
+    const fetchUsers = async () => {
+        try {
+            const res = await fetch("http://localhost:3000/user");
+            if (res.ok) {
+                const data = await res.json();
+                // Filter out any broken/empty objects just in case
+                const validUsers = data.filter(u => u && u.name && u.email);
+                setUsersList(validUsers);
+            }
+        } catch (err) {
+            console.error("Error fetching users:", err);
+        }
+    };
+
+    useEffect(() => {
+        fetchUsers();
+    }, []);
+
+    // Handle Sign Up
+    const handleSignUpSubmit = async (e) => {
+        e.preventDefault();
+
+        // Validate non-empty inputs
+        const trimmedName = signupData.name.trim();
+        const trimmedEmail = signupData.email.trim();
+        const trimmedPassword = signupData.password.trim();
+
+        if (!trimmedName || !trimmedEmail || !trimmedPassword) {
+            setStatusMessage({ type: "error", text: "Name, email, and password cannot be empty spaces." });
+            return;
+        }
+
         setLoading(true);
-        setResponse(null);
-
-        const startTime = performance.now();
+        setStatusMessage(null);
 
         try {
-            const options = {
-                method,
-                headers: {
-                    "Content-Type": "application/json"
-                },
-            };
+            const res = await fetch("http://localhost:3000/signup", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    name: trimmedName,
+                    email: trimmedEmail,
+                    password: trimmedPassword,
+                    age: signupData.age ? Number(signupData.age) : null
+                })
+            });
 
-            // Send body only for relevant request types
-            if (["POST", "PUT", "PATCH"].includes(method) && body.trim() !== "") {
-                options.body = body;
-            }
+            const data = await res.json();
 
-            const res = await fetch(url, options);
-            const endTime = performance.now();
-
-            const contentType = res.headers.get("content-type");
-            let data;
-            if (contentType && contentType.includes("application/json")) {
-                data = await res.json();
+            if (res.ok) {
+                setStatusMessage({ type: "success", text: "User registered successfully!" });
+                setSignupData({ name: "", email: "", password: "", age: "" });
+                fetchUsers();
             } else {
-                data = await res.text();
+                setStatusMessage({ type: "error", text: data.message || "Failed to register" });
             }
-
-            setResponse({
-                status: res.status,
-                statusText: res.statusText || "OK",
-                time: Math.round(endTime - startTime),
-                size: new Blob([typeof data === "object" ? JSON.stringify(data) : data]).size,
-                data: data,
-            });
         } catch (err) {
-            setResponse({
-                status: 0,
-                statusText: "Network Error",
-                time: 0,
-                size: 0,
-                data: { error: "Failed to connect to " + url + ". Is your server running?" },
-            });
+            setStatusMessage({ type: "error", text: "Cannot connect to server." });
         } finally {
             setLoading(false);
         }
     };
 
+    // Handle Delete User
+    const handleDeleteUser = async (id) => {
+        if (!window.confirm(`Delete user #${id}?`)) return;
+
+        try {
+            const res = await fetch(`http://localhost:3000/user/${id}`, {
+                method: "DELETE"
+            });
+
+            if (res.ok) {
+                setStatusMessage({ type: "success", text: `User #${id} deleted.` });
+                fetchUsers();
+            }
+        } catch (err) {
+            setStatusMessage({ type: "error", text: "Failed to delete user." });
+        }
+    };
+
+    // Start editing user row
+    const handleStartEdit = (user) => {
+        setEditingUserId(user.id);
+        setEditFormData({ name: user.name || "", email: user.email || "" });
+    };
+
+    // Save edited user
+    const handleSaveEdit = async (id) => {
+        const trimmedName = editFormData.name.trim();
+        const trimmedEmail = editFormData.email.trim();
+
+        if (!trimmedName || !trimmedEmail) {
+            setStatusMessage({ type: "error", text: "Name and email cannot be blank when updating." });
+            return;
+        }
+
+        try {
+            const res = await fetch(`http://localhost:3000/user/${id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name: trimmedName, email: trimmedEmail })
+            });
+
+            if (res.ok) {
+                setEditingUserId(null);
+                setStatusMessage({ type: "success", text: `User #${id} updated.` });
+                fetchUsers();
+            }
+        } catch (err) {
+            setStatusMessage({ type: "error", text: "Failed to update user." });
+        }
+    };
+
     return (
         <div className="dashboard-container">
-            {/* 1. TOP HEADER */}
             <header className="dashboard-header">
-                <h1>API testing Dashboard</h1>
+                <h1>User Management Portal</h1>
             </header>
 
             <main className="dashboard-content">
-                {/* 2. METHOD DROPDOWN + URL BAR + SEND BUTTON */}
-                <div className="request-bar">
-                    <select 
-                        className={`method-select method-${method}`}
-                        value={method} 
-                        onChange={(e) => setMethod(e.target.value)}
-                    >
-                        <option value="GET">GET</option>
-                        <option value="POST">POST</option>
-                        <option value="PUT">PUT</option>
-                        <option value="DELETE">DELETE</option>
-                    </select>
+                {/* STATUS NOTIFICATION */}
+                {statusMessage && (
+                    <div className={`status-banner ${statusMessage.type}`}>
+                        {statusMessage.text}
+                    </div>
+                )}
 
-                    <input 
-                        type="text" 
-                        className="url-input" 
-                        value={url} 
-                        onChange={(e) => setUrl(e.target.value)}
-                        placeholder="Enter Request URL (e.g., http://localhost:3000/user)"
-                    />
-
-                    <button className="send-btn" onClick={handleSendRequest} disabled={loading}>
-                        {loading ? "Sending..." : "Send Request"}
-                    </button>
-                </div>
-
-                {/* 3. REQUEST BODY AREA */}
+                {/* 1. SIGN UP SECTION */}
                 <section className="section-box">
                     <div className="section-title">
-                        <h3>Request Body (JSON)</h3>
+                        <h3>Register New User</h3>
                     </div>
                     <div className="section-body">
-                        <textarea 
-                            className="code-editor"
-                            value={body}
-                            onChange={(e) => setBody(e.target.value)}
-                            placeholder='{\n  "name": "aadi",\n  "email": "aadi@example.com"\n}'
-                        />
+                        <form className="signup-form" onSubmit={handleSignUpSubmit}>
+                            <input 
+                                type="text" 
+                                placeholder="Full Name" 
+                                value={signupData.name}
+                                onChange={(e) => setSignupData({ ...signupData, name: e.target.value })}
+                                required
+                            />
+                            <input 
+                                type="email" 
+                                placeholder="Email Address" 
+                                value={signupData.email}
+                                onChange={(e) => setSignupData({ ...signupData, email: e.target.value })}
+                                required
+                            />
+                            <input 
+                                type="password" 
+                                placeholder="Password" 
+                                value={signupData.password}
+                                onChange={(e) => setSignupData({ ...signupData, password: e.target.value })}
+                                required
+                            />
+                            <input 
+                                type="number" 
+                                placeholder="Age (optional)" 
+                                value={signupData.age}
+                                onChange={(e) => setSignupData({ ...signupData, age: e.target.value })}
+                            />
+                            <button type="submit" className="submit-btn" disabled={loading}>
+                                {loading ? "Registering..." : "Sign Up"}
+                            </button>
+                        </form>
                     </div>
                 </section>
 
-                {/* 4. RESPONSE AREA */}
+                {/* 2. REGISTERED USERS TABLE */}
                 <section className="section-box">
-                    <div className="response-header">
-                        <h3>Response</h3>
-                        {response && (
-                            <div className="response-meta">
-                                <span className={`status-badge ${response.status >= 200 && response.status < 300 ? 'status-success' : 'status-error'}`}>
-                                    {response.status} {response.statusText}
-                                </span>
-                                <span className="meta-info">Time: {response.time} ms</span>
-                                <span className="meta-info">Size: {response.size} B</span>
-                            </div>
-                        )}
+                    <div className="section-title">
+                        <h3>Registered Users ({usersList.length})</h3>
                     </div>
-
                     <div className="section-body">
-                        {response ? (
-                            <pre className="code-viewer">
-                                {typeof response.data === "object" 
-                                    ? JSON.stringify(response.data, null, 2) 
-                                    : response.data}
-                            </pre>
-                        ) : (
-                            <div className="empty-response">
-                                Response output will appear here after sending a request
-                            </div>
-                        )}
+                        <table className="users-table">
+                            <thead>
+                                <tr>
+                                    <th style={{ width: "60px" }}>ID</th>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th style={{ width: "160px", textAlign: "center" }}>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {usersList.length === 0 ? (
+                                    <tr>
+                                        <td colSpan="4" style={{ textAlign: "center", color: "#888" }}>
+                                            No registered users found.
+                                        </td>
+                                    </tr>
+                                ) : (
+                                    usersList.map((u) => (
+                                        <tr key={u.id}>
+                                            <td>#{u.id}</td>
+                                            <td>
+                                                {editingUserId === u.id ? (
+                                                    <input 
+                                                        type="text" 
+                                                        className="table-input"
+                                                        value={editFormData.name} 
+                                                        onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
+                                                    />
+                                                ) : (
+                                                    u.name || <em style={{ color: "#777" }}>No Name</em>
+                                                )}
+                                            </td>
+                                            <td>
+                                                {editingUserId === u.id ? (
+                                                    <input 
+                                                        type="email" 
+                                                        className="table-input"
+                                                        value={editFormData.email} 
+                                                        onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
+                                                    />
+                                                ) : (
+                                                    u.email || <em style={{ color: "#777" }}>No Email</em>
+                                                )}
+                                            </td>
+                                            <td style={{ textAlign: "center" }}>
+                                                {editingUserId === u.id ? (
+                                                    <div className="action-btns">
+                                                        <button className="btn-save" onClick={() => handleSaveEdit(u.id)}>Save</button>
+                                                        <button className="btn-cancel" onClick={() => setEditingUserId(null)}>Cancel</button>
+                                                    </div>
+                                                ) : (
+                                                    <div className="action-btns">
+                                                        <button className="btn-update" onClick={() => handleStartEdit(u)}>Update</button>
+                                                        <button className="btn-delete" onClick={() => handleDeleteUser(u.id)}>Delete</button>
+                                                    </div>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
                     </div>
                 </section>
             </main>
