@@ -1,6 +1,9 @@
 import express from "express";
 import cors from "cors"; 
-
+import dotenv from "dotenv";
+import connectDB from "./db.js";
+dotenv.config();
+connectDB();
 let userData = [
     {
         id: null,
@@ -21,12 +24,12 @@ app.get("/msg", (req, res) => {
     res.json({ message: "Welcome to Express" });
 });
 
-// GET ALL USERS
+
 app.get("/user", (req, res) => {
     res.json(userData);
 });
 
-// GET SINGLE USER BY ID
+
 app.get("/user/:id", (req, res) => {
     const id = Number(req.params.id);
 
@@ -52,7 +55,7 @@ app.get("/user/:id", (req, res) => {
     });
 });
 
-// SIGN UP ROUTE
+
 app.post("/signup", (req, res) => {
     const { name, email, password, age } = req.body;
 
@@ -92,7 +95,7 @@ app.post("/signup", (req, res) => {
     });
 });
 
-// CREATE USER
+
 app.post("/user", (req, res) => {
     const { name, email, age } = req.body;
 
@@ -117,7 +120,7 @@ app.post("/user", (req, res) => {
     });
 });
 
-// UPDATE USER
+
 app.put("/user/:id", (req, res) => {
     const id = Number(req.params.id);
     const { name, email, age } = req.body;

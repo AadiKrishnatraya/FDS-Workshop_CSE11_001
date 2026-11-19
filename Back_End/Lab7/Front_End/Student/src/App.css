@@ -1,0 +1,180 @@
+body {
+    background-color: #0d0d0d;
+    color: #e0e0e0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+.dashboard-container {
+    max-width: 800px;
+    margin: 40px auto;
+    padding: 0 20px;
+}
+
+.dashboard-header h1 {
+    font-size: 24px;
+    color: #ffffff;
+    margin-bottom: 24px;
+}
+
+.status-banner {
+    padding: 12px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    font-size: 14px;
+}
+
+.status-banner.success {
+    background-color: rgba(152, 195, 121, 0.15);
+    color: #98c379;
+    border: 1px solid #98c379;
+}
+
+.status-banner.error {
+    background-color: rgba(224, 108, 117, 0.15);
+    color: #e06c75;
+    border: 1px solid #e06c75;
+}
+
+.section-box {
+    background-color: #181818;
+    border: 1px solid #2a2a2a;
+    border-radius: 8px;
+    margin-bottom: 24px;
+    overflow: hidden;
+}
+
+.section-title {
+    padding: 12px 16px;
+    background-color: #1f1f1f;
+    border-bottom: 1px solid #2a2a2a;
+}
+
+.section-title h3 {
+    margin: 0;
+    font-size: 14px;
+    color: #aaa;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.section-body {
+    padding: 16px;
+}
+
+/* Form Styles */
+.signup-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.signup-form input {
+    padding: 10px 12px;
+    border-radius: 6px;
+    border: 1px solid #333;
+    background-color: #121212;
+    color: #fff;
+    font-size: 14px;
+}
+
+.signup-form input:focus {
+    outline: 1px solid #007acc;
+}
+
+.submit-btn {
+    grid-column: span 2;
+    background-color: #007acc;
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.submit-btn:hover {
+    background-color: #005999;
+}
+
+/* Table Styles */
+.users-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.users-table th, 
+.users-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid #2a2a2a;
+    text-align: left;
+}
+
+.users-table th {
+    color: #aaa;
+    font-size: 12px;
+    font-weight: 500;
+    background-color: #141414;
+}
+
+.table-input {
+    width: 90%;
+    padding: 6px 8px;
+    border-radius: 4px;
+    border: 1px solid #007acc;
+    background-color: #121212;
+    color: #fff;
+    font-size: 13px;
+}
+
+/* Action Buttons */
+.action-btns {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+}
+
+.btn-update {
+    background-color: #d19a66;
+    color: #121212;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-weight: bold;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.btn-delete {
+    background-color: #e06c75;
+    color: #ffffff;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-weight: bold;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.btn-save {
+    background-color: #98c379;
+    color: #121212;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-weight: bold;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.btn-cancel {
+    background-color: #333;
+    color: #ccc;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+}
